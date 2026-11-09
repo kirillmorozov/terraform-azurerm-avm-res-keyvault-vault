@@ -42,6 +42,38 @@ variables {
   tenant_id        = "00000000-0000-0000-0000-000000000000"
 }
 
+run "soft_delete_enabled_with_default_retention" {
+  command = plan
+
+  assert {
+    condition     = azapi_resource.this.body.properties.enableSoftDelete == true
+    error_message = "The vault request must explicitly enable soft delete for Deny policies."
+  }
+
+  assert {
+    condition     = azapi_resource.this.body.properties.softDeleteRetentionInDays == null
+    error_message = "Omitted retention must continue to use Azure's default."
+  }
+}
+
+run "soft_delete_enabled_with_explicit_retention" {
+  command = plan
+
+  variables {
+    soft_delete_retention_days = 7
+  }
+
+  assert {
+    condition     = azapi_resource.this.body.properties.enableSoftDelete == true
+    error_message = "Explicit retention must still send enableSoftDelete for Deny policies."
+  }
+
+  assert {
+    condition     = azapi_resource.this.body.properties.softDeleteRetentionInDays == 7
+    error_message = "The vault request must preserve the configured retention."
+  }
+}
+
 run "role_assignment_descriptions" {
   command = plan
 
